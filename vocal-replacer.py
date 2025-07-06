@@ -1,8 +1,18 @@
-from rvc_python.infer import RVCInference
 from audio_separator.separator import Separator
 import argparse
 from yt_dlp import YoutubeDL
 from pydub import AudioSegment
+from pathlib import Path
+
+from dotenv import load_dotenv
+from scipy.io import wavfile
+
+from rvc.modules.vc.modules import VC
+
+load_dotenv(".env")
+
+model = "./models/miku_default_rvc/miku_default_rvc.pth"
+model_index = "./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index"
 
 #args
 parser = argparse.ArgumentParser(
@@ -15,9 +25,13 @@ parser.add_argument("-p", "--pitch", default=0, type=int, help="Transpose (integ
 args = parser.parse_args()
 
 # rvc
-rvc = RVCInference(device="cuda:0")
-rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
-rvc.set_params(f0method="crepe",filter_radius=100, protect=1, index_rate=1, f0up_key=args.pitch)
+#rvc = RVCInference(device="cuda:0")
+#rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
+#rvc.set_params(f0method="crepe",filter_radius=100, protect=1, index_rate=1, f0up_key=args.pitch)
+
+vc = VC()
+vc.get_vc(model)
+
 
 # Initialize the Separator class (with optional configuration properties, below)
 separator = Separator()
@@ -50,7 +64,19 @@ with YoutubeDL(ydl_opts) as ydl:
 # Separate all audio files located in a folder
 output_files = separator.separate(final_filename, output_names)
 
-rvc.infer_file("vocals_output.wav", "vocals_output.wav")
+#rvc.infer_file("vocals_output.wav", "vocals_output.wav")
+
+
+tgt_sr, audio_opt, times, _ = vc.vc_single(
+            1,
+            Path("vocals_output.wav"),
+            args.pitch,
+            'crepe',
+            index_file=model_index,
+            filter_radius=3,
+            protect=0.33
+      )
+wavfile.write("vocals_output.wav", tgt_sr, audio_opt)
 
 sound1 = AudioSegment.from_file("vocals_output.wav")
 sound2 = AudioSegment.from_file("instrumental_output.wav")

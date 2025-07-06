@@ -2,3 +2,6 @@
 models
 *.wav
 output
+temp
+VoiceConversionWebUI
+assets
