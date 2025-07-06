@@ -3,6 +3,7 @@ from audio_separator.separator import Separator
 import argparse
 from yt_dlp import YoutubeDL
 from pydub import AudioSegment
+import re
 
 #args
 parser = argparse.ArgumentParser(
@@ -35,16 +36,19 @@ ydl_opts = {
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'wav',
     }],
-    'outtmpl': '%(title)s.%(ext)s'
+    'outtmpl': '%(title)s.%(ext)s',
+    'restrictfilenames': True,
 }
 
 with YoutubeDL(ydl_opts) as ydl:
-    info_dict = ydl.extract_info(args.url, download=False)
-    audio_filename = info_dict.get('title', None) + '.wav'
-    ydl.download([args.url])
+    info = ydl.extract_info(args.url, download=True)
+    info_with_audio_extension = dict(info)
+    info_with_audio_extension['ext'] = 'wav'
+    final_filename = ydl.prepare_filename(info_with_audio_extension)
+
 
 # Separate all audio files located in a folder
-output_files = separator.separate(audio_filename, output_names)
+output_files = separator.separate(final_filename, output_names)
 
 rvc.infer_file("vocals_output.wav", "vocals_output.wav")
 
@@ -53,4 +57,4 @@ sound2 = AudioSegment.from_file("instrumental_output.wav")
 
 combined = sound1.overlay(sound2)
 
-combined.export("output/Miku " + audio_filename, format='wav')
+combined.export("output/Miku " + final_filename, format='wav')
