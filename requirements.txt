@@ -1,6 +1,7 @@
-python-rvc
+rvc
 torch<2.6
 torchaudio<2.6
 yt-dlp
 audio-separator
 pydub
+scipy.io
