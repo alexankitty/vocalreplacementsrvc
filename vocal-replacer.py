@@ -3,7 +3,6 @@ from audio_separator.separator import Separator
 import argparse
 from yt_dlp import YoutubeDL
 from pydub import AudioSegment
-import re
 
 #args
 parser = argparse.ArgumentParser(
@@ -12,12 +11,13 @@ parser = argparse.ArgumentParser(
                     epilog='By: Alexankitty')
 
 parser.add_argument("url")
+parser.add_argument("-p", "--pitch", default=0, type=int, help="Transpose (integer, number of semitones)")
 args = parser.parse_args()
 
 # rvc
 rvc = RVCInference(device="cuda:0")
 rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
-rvc.set_params(f0method="crepe")
+rvc.set_params(f0method="crepe",filter_radius=100, protect=1, index_rate=1, f0up_key=args.pitch)
 
 # Initialize the Separator class (with optional configuration properties, below)
 separator = Separator()
@@ -37,7 +37,7 @@ ydl_opts = {
         'preferredcodec': 'wav',
     }],
     'outtmpl': '%(title)s.%(ext)s',
-    'restrictfilenames': True,
+    'restrictfilenames': True
 }
 
 with YoutubeDL(ydl_opts) as ydl:
