@@ -71,7 +71,7 @@ tgt_sr, audio_opt, times, _ = vc.vc_single(
             1,
             Path("vocals_output.wav"),
             args.pitch,
-            'crepe',
+            'rmvpe',
             index_file=model_index,
             filter_radius=3,
             protect=0.33
