@@ -11,8 +11,7 @@ from rvc.modules.vc.modules import VC
 
 load_dotenv(".env")
 
-model = "./models/miku_default_rvc/miku_default_rvc.pth"
-model_index = "./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index"
+
 
 #args
 parser = argparse.ArgumentParser(
@@ -20,9 +19,16 @@ parser = argparse.ArgumentParser(
                     description='Replaces vocals from a youtube video',
                     epilog='By: Alexankitty')
 
+parser.add_argument("voice")
 parser.add_argument("url")
+
 parser.add_argument("-p", "--pitch", default=0, type=int, help="Transpose (integer, number of semitones)")
 args = parser.parse_args()
+
+model_name = args.voice
+
+model = f"./models/{model_name}/model.pth"
+model_index = f"./models/{model_name}/model.index"
 
 # rvc
 #rvc = RVCInference(device="cuda:0")
@@ -73,8 +79,8 @@ tgt_sr, audio_opt, times, _ = vc.vc_single(
             args.pitch,
             'rmvpe',
             index_file=model_index,
-            filter_radius=3,
-            protect=0.33
+            filter_radius=10,
+            protect=0
       )
 wavfile.write("vocals_output.wav", tgt_sr, audio_opt)
 
@@ -83,4 +89,4 @@ sound2 = AudioSegment.from_file("instrumental_output.wav")
 
 combined = sound1.overlay(sound2)
 
-combined.export("output/Miku " + final_filename, format='wav')
+combined.export(f"output/{model_name}_" + final_filename, format='wav')
